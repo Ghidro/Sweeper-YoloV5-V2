@@ -4,6 +4,7 @@ import os
 from detect import run
 from picamera2 import Picamera2
 import time
+import matplotlib.pyplot as plt
 
 sample_images_path = 'data/images'
 weights_path = 'best.pt'
@@ -28,8 +29,23 @@ def main():
     # Allow the camera to warm up
     time.sleep(0.1)
 
-    # Run YOLO inference on the camera feed
-    run(weights=weights_path, source=0, view_img=True)
+    while True:
+        # Capture frame-by-frame
+        frame = picam2.capture_array()
+
+        # Run YOLO inference on the frame
+        results = run(weights=weights_path, source=frame, view_img=False)
+
+        # Visualize the results on the frame
+        annotated_frame = results[0].plot()
+
+        # Display the resulting frame using Matplotlib
+        plt.imshow(cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB))
+        plt.show()
+
+        # Break the loop if 'q' is pressed
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
 
 if __name__ == '__main__':
     main()
