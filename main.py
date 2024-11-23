@@ -8,8 +8,7 @@ weights_path = 'best.pt'
 
 def main():
     for image in os.listdir(sample_images_path):
-        img = cv.imread(os.path.join(sample_images_path, image))
-        results = run(weights=weights_path, source=img)
+        results = run(weights=weights_path, source=image)
         
         for result in results:
             # preview the results
