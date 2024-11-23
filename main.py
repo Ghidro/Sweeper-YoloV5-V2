@@ -16,7 +16,13 @@ pathlib.WindowsPath = pathlib.PosixPath
 sample_images_path = 'data/images'
 weights_path = 'best.pt'
 
-def run_picamera(weights, imgsz=(640, 640), conf_thres=0.25, iou_thres=0.45, device='', view_img=True, save_img=False):
+def run_picamera(weights, 
+                 imgsz=(640, 640), 
+                 conf_thres=0.25, 
+                 iou_thres=0.45, 
+                 device='', 
+                 view_img=True, 
+                 save_img=False):
     # Load model
     device = select_device(device)
     model = DetectMultiBackend(weights, device=device)
@@ -40,8 +46,9 @@ def run_picamera(weights, imgsz=(640, 640), conf_thres=0.25, iou_thres=0.45, dev
 
         # Preprocess the frame
         im = cv.resize(im0, imgsz)  # resize
+        im = im.transpose((2, 0, 1))  # Change from HWC to CHW
         im = torch.from_numpy(im).to(device)
-        im = im.half() if model.fp16 else im.float() 
+        im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
         im /= 255  # 0 - 255 to 0.0 - 1.0
         if len(im.shape) == 3:
             im = im[None]  # expand for batch dim
@@ -52,6 +59,7 @@ def run_picamera(weights, imgsz=(640, 640), conf_thres=0.25, iou_thres=0.45, dev
         # NMS
         pred = non_max_suppression(pred, conf_thres, iou_thres)
 
+        # Process predictions
         for i, det in enumerate(pred):  # per image
             im0_copy = im0.copy()
             annotator = Annotator(im0_copy, line_width=3, example=str(names))
@@ -65,9 +73,11 @@ def run_picamera(weights, imgsz=(640, 640), conf_thres=0.25, iou_thres=0.45, dev
                     label = f'{names[c]} {conf:.2f}'
                     annotator.box_label(xyxy, label, color=colors(c, True))
 
+            # Display the resulting frame
             if view_img:
                 cv.imshow('Picamera2', im0_copy)
 
+            # Save results (image with detections)
             if save_img:
                 save_path = str(Path('picamera2_output.jpg'))
                 cv.imwrite(save_path, im0_copy)
@@ -78,6 +88,7 @@ def run_picamera(weights, imgsz=(640, 640), conf_thres=0.25, iou_thres=0.45, dev
 
     # Release resources and close windows
     cv.destroyAllWindows()
+
 
 
 if __name__ == '__main__':
