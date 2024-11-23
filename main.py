@@ -8,7 +8,8 @@ weights_path = 'best.pt'
 
 def main():
     for image in os.listdir(sample_images_path):
-        results = run(weights=weights_path, source=image)
+        image_path = os.path.join(sample_images_path, image)
+        results = run(weights=weights_path, source=image_path)
         
         for result in results:
             # preview the results
