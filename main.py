@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 import os
 from detect import run
-from picamera2 import Picamera2, Preview
+from picamera2 import Picamera2
 import time
 
 sample_images_path = 'data/images'
@@ -17,10 +17,12 @@ def main():
         
     #     print(f'Processing {image_path}...')
     
-    # Initialize the camera
+    # Initialize the Picamera2
     picam2 = Picamera2()
-    config = picam2.create_preview_configuration(main={"size": (640, 480)})
-    picam2.configure(config)
+    picam2.preview_configuration.main.size = (640, 480)
+    picam2.preview_configuration.main.format = "RGB888"
+    picam2.preview_configuration.align()
+    picam2.configure("preview")
     picam2.start()
 
     # Allow the camera to warm up
@@ -30,19 +32,21 @@ def main():
         # Capture frame-by-frame
         frame = picam2.capture_array()
 
-        # Run the detection
-        run(weights=weights_path, source=frame)
+        # Run YOLO inference on the frame
+        results = run(weights=weights_path, source=frame, view_img=True)
 
-        # Display the frame
-        cv.imshow("Frame", frame)
+        # Visualize the results on the frame
+        annotated_frame = results[0].plot()
+
+        # Display the resulting frame
+        cv.imshow("Camera", annotated_frame)
 
         # Break the loop if 'q' is pressed
-        if cv.waitKey(1) & 0xFF == ord('q'):
+        if cv.waitKey(1) & 0xFF == ord("q"):
             break
 
-    # Release the camera
+    # Release resources and close windows
     cv.destroyAllWindows()
-        
-            
+
 if __name__ == '__main__':
     main()
