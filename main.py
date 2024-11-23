@@ -9,36 +9,39 @@ from utils.general import check_img_size, non_max_suppression, scale_boxes
 from utils.torch_utils import select_device
 from utils.plots import Annotator, colors
 import time
+import pathlib
+
+pathlib.WindowsPath = pathlib.PosixPath
 
 sample_images_path = 'data/images'
 weights_path = 'best.pt'
 
-camera_port = 0
-
-def run_webcam(weights, imgsz=(640, 640), conf_thres=0.25, iou_thres=0.45, device='', view_img=True, save_img=False):
+def run_picamera(weights, imgsz=(640, 640), conf_thres=0.25, iou_thres=0.45, device='', view_img=True, save_img=False):
     # Load model
     device = select_device(device)
     model = DetectMultiBackend(weights, device=device)
     stride, names, pt = model.stride, model.names, model.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size
 
-    # Initialize webcam
-    cap = cv.VideoCapture(0)
-    if not cap.isOpened():
-        print("Error: Could not open webcam.")
-        return
+    # Initialize Picamera2
+    picam2 = Picamera2()
+    picam2.preview_configuration.main.size = (640, 480)
+    picam2.preview_configuration.main.format = "RGB888"
+    picam2.preview_configuration.align()
+    picam2.configure("preview")
+    picam2.start()
+
+    # Allow the camera to warm up
+    time.sleep(0.1)
 
     while True:
         # Capture frame-by-frame
-        ret, im0 = cap.read()
-        if not ret:
-            print("Error: Could not read frame.")
-            break
+        im0 = picam2.capture_array()
 
         # Preprocess the frame
         im = cv.resize(im0, imgsz)  # resize
         im = torch.from_numpy(im).to(device)
-        im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
+        im = im.half() if model.fp16 else im.float() 
         im /= 255  # 0 - 255 to 0.0 - 1.0
         if len(im.shape) == 3:
             im = im[None]  # expand for batch dim
@@ -49,7 +52,6 @@ def run_webcam(weights, imgsz=(640, 640), conf_thres=0.25, iou_thres=0.45, devic
         # NMS
         pred = non_max_suppression(pred, conf_thres, iou_thres)
 
-        # Process predictions
         for i, det in enumerate(pred):  # per image
             im0_copy = im0.copy()
             annotator = Annotator(im0_copy, line_width=3, example=str(names))
@@ -63,13 +65,11 @@ def run_webcam(weights, imgsz=(640, 640), conf_thres=0.25, iou_thres=0.45, devic
                     label = f'{names[c]} {conf:.2f}'
                     annotator.box_label(xyxy, label, color=colors(c, True))
 
-            # Display the resulting frame
             if view_img:
-                cv.imshow('Webcam', im0_copy)
+                cv.imshow('Picamera2', im0_copy)
 
-            # Save results (image with detections)
             if save_img:
-                save_path = str(Path('webcam_output.jpg'))
+                save_path = str(Path('picamera2_output.jpg'))
                 cv.imwrite(save_path, im0_copy)
 
         # Break the loop if 'q' is pressed
@@ -77,13 +77,12 @@ def run_webcam(weights, imgsz=(640, 640), conf_thres=0.25, iou_thres=0.45, devic
             break
 
     # Release resources and close windows
-    cap.release()
     cv.destroyAllWindows()
 
-# Example usage
+
 if __name__ == '__main__':
     weights_path = 'best.pt'
-    run_webcam(weights_path, view_img=True, save_img=False)
+    run_picamera(weights_path, view_img=True, save_img=False)
 
 # def main():
 #     # for image in os.listdir(sample_images_path):
