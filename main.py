@@ -47,6 +47,10 @@ def run_picamera(weights,
         # Capture frame-by-frame
         im0 = picam2.capture_array()
 
+        # Display the raw webcam feed
+        if view_img:
+            cv.imshow('Raw Picamera2', im0)
+
         # Only process every nth frame
         if frame_count % frame_stride == 0:
             # Preprocess the frame
@@ -78,9 +82,9 @@ def run_picamera(weights,
                         label = f'{names[c]} {conf:.2f}'
                         annotator.box_label(xyxy, label, color=colors(c, True))
 
-                # Display the resulting frame
+                # Display the resulting frame with predictions
                 if view_img:
-                    cv.imshow('Picamera2', im0_copy)
+                    cv.imshow('Predictions Picamera2', im0_copy)
 
                 # Save results (image with detections)
                 if save_img:
@@ -99,4 +103,4 @@ def run_picamera(weights,
 # Example usage
 if __name__ == '__main__':
     weights_path = 'best.pt'
-    run_picamera(weights_path, view_img=True, save_img=False, frame_stride=30)
+    run_picamera(weights_path, view_img=True, save_img=False, frame_stride=5)
