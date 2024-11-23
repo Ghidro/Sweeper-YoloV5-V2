@@ -30,7 +30,7 @@ def main():
     time.sleep(0.1)
 
     # Run YOLO inference on the camera feed and save the results
-    run(weights=weights_path, source=0, view_img=False, save_img=True, project='runs/detect', name='exp', exist_ok=True)
+    run(weights=weights_path, source=0, view_img=True)
 
 if __name__ == '__main__':
     main()
