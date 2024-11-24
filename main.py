@@ -20,6 +20,8 @@ from utils.general import check_imshow
 sample_images_path = 'data/images'
 weights_path = 'best.pt' # change this to path of weights na galing sa training niyo
 
+pathlib.PosixPath = pathlib.WindowsPath
+
 USE_PICAMERA = False
 
 FILE = Path(__file__).resolve()
