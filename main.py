@@ -2,8 +2,8 @@ import os
 import pathlib
 
 # Ensure correct path type based on the operating system
-if os.name == 'nt':
-    pathlib.PosixPath = pathlib.WindowsPath
+# if os.name == 'nt':
+#     pathlib.PosixPath = pathlib.WindowsPath
     
 import platform
 import cv2
