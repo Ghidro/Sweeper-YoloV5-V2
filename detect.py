@@ -66,7 +66,7 @@ from utils.general import (
 )
 from utils.torch_utils import select_device, smart_inference_mode
 
-pathlib.WindowsPath = pathlib.PosixPath
+# pathlib.WindowsPath = pathlib.PosixPath
 
 
 @smart_inference_mode()
